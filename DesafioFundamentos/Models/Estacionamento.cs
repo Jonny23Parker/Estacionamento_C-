@@ -1,67 +1,210 @@
-namespace DesafioFundamentos.Models
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+class Program
 {
-    public class Estacionamento
+    static void Main(string[] args)
     {
-        private decimal precoInicial = 0;
-        private decimal precoPorHora = 0;
-        private List<string> veiculos = new List<string>();
+        double preçoInicial, preçoPorHora;
+        int opção;
 
-        public Estacionamento(decimal precoInicial, decimal precoPorHora)
+        Console.WriteLine("Seja bem-vindo ao sistema de estacionamento!");
+
+        while (true)
         {
-            this.precoInicial = precoInicial;
-            this.precoPorHora = precoPorHora;
-        }
-
-        public void AdicionarVeiculo()
-        {
-            // TODO: Pedir para o usuário digitar uma placa (ReadLine) e adicionar na lista "veiculos"
-            // *IMPLEMENTE AQUI*
-            Console.WriteLine("Digite a placa do veículo para estacionar:");
-        }
-
-        public void RemoverVeiculo()
-        {
-            Console.WriteLine("Digite a placa do veículo para remover:");
-
-            // Pedir para o usuário digitar a placa e armazenar na variável placa
-            // *IMPLEMENTE AQUI*
-            string placa = "";
-
-            // Verifica se o veículo existe
-            if (veiculos.Any(x => x.ToUpper() == placa.ToUpper()))
+            try
             {
-                Console.WriteLine("Digite a quantidade de horas que o veículo permaneceu estacionado:");
-
-                // TODO: Pedir para o usuário digitar a quantidade de horas que o veículo permaneceu estacionado,
-                // TODO: Realizar o seguinte cálculo: "precoInicial + precoPorHora * horas" para a variável valorTotal                
-                // *IMPLEMENTE AQUI*
-                int horas = 0;
-                decimal valorTotal = 0; 
-
-                // TODO: Remover a placa digitada da lista de veículos
-                // *IMPLEMENTE AQUI*
-
-                Console.WriteLine($"O veículo {placa} foi removido e o preço total foi de: R$ {valorTotal}");
+                Console.Write("Digite o preço inicial: ");
+                preçoInicial = Convert.ToDouble(Console.ReadLine());
+                break;
             }
-            else
+            catch (FormatException)
             {
-                Console.WriteLine("Desculpe, esse veículo não está estacionado aqui. Confira se digitou a placa corretamente");
+                Console.WriteLine("ERRO: Por favor, digite o preço inicial do estacionamento.");
+                Thread.Sleep(1500);
+                Console.Clear();
             }
         }
 
-        public void ListarVeiculos()
+        while (true)
         {
-            // Verifica se há veículos no estacionamento
-            if (veiculos.Any())
+            try
             {
-                Console.WriteLine("Os veículos estacionados são:");
-                // TODO: Realizar um laço de repetição, exibindo os veículos estacionados
-                // *IMPLEMENTE AQUI*
+                Console.Write("Digite o preço por hora: ");
+                preçoPorHora = Convert.ToDouble(Console.ReadLine());
+                break;
             }
-            else
+            catch (FormatException)
             {
-                Console.WriteLine("Não há veículos estacionados.");
+                Console.WriteLine("ERRO: Por favor, digite o preço por hora do estacionamento.");
+                Thread.Sleep(1500);
+                Console.Clear();
             }
         }
+
+        Estacionamento estacionamento = new Estacionamento(preçoInicial, preçoPorHora);
+
+        while (true)
+        {
+            opção = Visual.Menu("Estacionamento", "Digite o número da opção desejada", "Cadastrar Veículos", "Listar Veículos", "Remover Veículos", "Encerrar");
+
+            switch (opção)
+            {
+                case 1:
+                    CadastrarVeiculo(estacionamento);
+                    break;
+                case 2:
+                    ListarVeiculos(estacionamento);
+                    break;
+                case 3:
+                    RemoverVeiculo(estacionamento);
+                    break;
+                case 4:
+                    Environment.Exit(0);
+                    break;
+                default:
+                    Console.WriteLine("Opção indisponível.");
+                    break;
+            }
+
+            Console.WriteLine("Pressione Enter para continuar.");
+            Console.ReadLine();
+        }
+    }
+
+    static void CadastrarVeiculo(Estacionamento estacionamento)
+    {
+        Console.Clear();
+        Console.Write("Digite a placa do veículo: ");
+        string veiculoDigitado = Console.ReadLine();
+        estacionamento.AdicionarVeiculo(veiculoDigitado);
+        Console.WriteLine("Veículo cadastrado com sucesso.");
+    }
+
+    static void ListarVeiculos(Estacionamento estacionamento)
+    {
+        Console.Clear();
+        var placas = estacionamento.ListaDePlacasDosVeiculosEstacionados();
+        if (placas.Count == 0)
+        {
+            Console.WriteLine("Nenhum veículo estacionado.");
+        }
+        else
+        {
+            Visual.Titulo("Veículos Estacionados");
+            for (int i = 0; i < placas.Count; i++)
+            {
+                Console.WriteLine($"{i + 1} - {placas[i]}");
+            }
+        }
+        Visual.Linha();
+    }
+
+    static void RemoverVeiculo(Estacionamento estacionamento)
+    {
+        Console.Clear();
+        Console.Write("Digite a placa do veículo para removê-lo: ");
+        string veiculoASerVerificadoERemovido = Console.ReadLine();
+
+        byte horasQueOVeiculoFicouEstacionado;
+        while (true)
+        {
+            try
+            {
+                Console.Clear();
+                Console.Write("Digite a quantidade de horas que o veículo permaneceu no estacionamento: ");
+                horasQueOVeiculoFicouEstacionado = Convert.ToByte(Console.ReadLine());
+                break;
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("ERRO: digite o número de horas que o veículo ficou estacionado.");
+                Thread.Sleep(1500);
+            }
+            catch (OverflowException)
+            {
+                Console.WriteLine("ERRO: Digite um valor válido.");
+                Thread.Sleep(1500);
+            }
+        }
+
+        bool veiculoEstaNoEstacionamento = estacionamento.VerificaçãoEExclusãoDoVeiculo(veiculoASerVerificadoERemovido);
+
+        if (veiculoEstaNoEstacionamento)
+        {
+            double preçoACobrar = estacionamento.RealizarCobrança(horasQueOVeiculoFicouEstacionado);
+            Console.WriteLine($"Remoção do veículo realizada com sucesso! Preço a cobrar: {preçoACobrar:C}");
+        }
+        else
+        {
+            Console.WriteLine("Veículo não encontrado.");
+        }
+    }
+}
+
+class Estacionamento
+{
+    public List<string> ListaDasPlacasDosVeículos = new List<string>();
+    public double PreçoBase;
+    public double PreçoHoras;
+
+    public Estacionamento(double preçoBase, double preçoHoras)
+    {
+        PreçoBase = preçoBase;
+        PreçoHoras = preçoHoras;
+    }
+
+    public bool VerificaçãoEExclusãoDoVeiculo(string placaDoVeiculo)
+    {
+        if (ListaDasPlacasDosVeículos.Contains(placaDoVeiculo))
+        {
+            ListaDasPlacasDosVeículos.Remove(placaDoVeiculo);
+            return true;
+        }
+        return false;
+    }
+
+    public double RealizarCobrança(short horasNoEstacionamento)
+    {
+        double preçoTotal = PreçoHoras * horasNoEstacionamento + PreçoBase;
+        return preçoTotal;
+    }
+
+    public void AdicionarVeiculo(string placaDoVeiculo)
+    {
+        ListaDasPlacasDosVeículos.Add(placaDoVeiculo);
+    }
+
+    public List<string> ListaDePlacasDosVeiculosEstacionados()
+    {
+        return ListaDasPlacasDosVeículos;
+    }
+}
+
+class Visual
+{
+    public static void Linha()
+    {
+        Console.WriteLine("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+    }
+
+    public static void Titulo(string titulo)
+    {
+        Console.WriteLine($"=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\t{titulo}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+    }
+
+    public static byte Menu(string titulo, string mensagemDeEscolha, params string[] opçõesDoMenu)
+    {
+        byte escolha;
+        Titulo(titulo);
+        for (int i = 0; i < opçõesDoMenu.Length; i++)
+        {
+            Console.WriteLine($"{i + 1} - {opçõesDoMenu[i]}");
+        }
+        Linha();
+        Console.Write($"{mensagemDeEscolha}: ");
+        escolha = Convert.ToByte(Console.ReadLine());
+        return escolha;
     }
 }
